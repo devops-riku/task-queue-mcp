@@ -79,3 +79,7 @@ npm test
 ```
 
 The tests run the tools against a fake Task Queue, and start the real server over stdio.
+
+## License
+
+MIT
