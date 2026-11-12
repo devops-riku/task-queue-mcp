@@ -1,0 +1,25 @@
+{
+  "name": "task-queue-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for Task Queue: list, create, report on, move and assign your tasks from any MCP client, with your personal API key.",
+  "type": "module",
+  "bin": {
+    "task-queue-mcp": "src/index.mjs"
+  },
+  "files": [
+    "src"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/index.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "zod": "4.6.7"
+  },
+  "repository": "https://github.com/devops-riku/task-queue-mcp",
+  "keywords": ["mcp", "task-queue", "model-context-protocol"]
+}
