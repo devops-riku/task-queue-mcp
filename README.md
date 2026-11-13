@@ -23,24 +23,46 @@ Tasks are named by their number, e.g. `TASK-000123`, or their id. Each tool need
 
 ## Setup
 
-You need Node.js 20 or later, and a **personal API key**: in Task Queue, open **Profile → API keys** and generate one.
+You need Node.js 20 or later.
 
-Every client runs the server with the same command, `npx -y github:devops-riku/task-queue-mcp`, and two settings:
+### Sign in from the terminal (easiest)
+
+Like `gh auth login`:
+
+```sh
+npx -y github:devops-riku/task-queue-mcp login --url https://tasks.example.com
+```
+
+It prints a code and opens Task Queue in your browser. Check that the page shows the same code, pick the workspace your tasks go to, and approve. The server then has an API key of its own, saved in `~/.task-queue/config.json` (shared with the Task Queue tracker plugin), and listed in Task Queue under **Profile → Connect → API keys**, where you can revoke it. No browser on that machine? Add `--no-browser` and open the printed link on any device where you're signed in.
+
+Then add the server to your agent, with no address or key:
+
+```sh
+claude mcp add task-queue -- npx -y github:devops-riku/task-queue-mcp
+codex mcp add task-queue -- npx -y github:devops-riku/task-queue-mcp
+gemini mcp add -s user task-queue npx -- -y github:devops-riku/task-queue-mcp
+```
+
+For other clients, use the JSON below without its `env`.
+
+### Or with an API key
+
+Make a **personal API key** in Task Queue under **Profile → Connect → API keys**. Every client runs the server with the same command, `npx -y github:devops-riku/task-queue-mcp`, and two settings:
 
 - `TASK_QUEUE_URL`: your Task Queue address, e.g. `https://tasks.example.com` (the API path is added for you)
 - `TASK_QUEUE_API_KEY`: your personal API key (`tqk_...`)
 
 Optional: `TASK_QUEUE_CATEGORY` (the category value `create_task` uses when none is given) and `TASK_QUEUE_WORKSPACE` (a workspace id, when you belong to several).
 
-**Already using the Task Queue tracker plugin?** Then this machine is set up: the server reads the tracker's settings from `~/.task-queue/config.json` and needs no environment variables.
+**Already using the Task Queue tracker plugin?** Then this machine is set up: the server reads the tracker's settings from `~/.task-queue/config.json` and needs no environment variables. Settings in the environment win over that file.
 
-### Claude Code
+#### Claude Code
 
 ```sh
 claude mcp add task-queue -e TASK_QUEUE_URL=https://tasks.example.com -e TASK_QUEUE_API_KEY=tqk_your_key -- npx -y github:devops-riku/task-queue-mcp
 ```
 
-### Codex
+#### Codex
 
 In `~/.codex/config.toml`:
 
@@ -51,7 +73,7 @@ args = ["-y", "github:devops-riku/task-queue-mcp"]
 env = { TASK_QUEUE_URL = "https://tasks.example.com", TASK_QUEUE_API_KEY = "tqk_your_key" }
 ```
 
-### Gemini CLI, Cursor, Claude Desktop
+#### Gemini CLI, Cursor, Claude Desktop
 
 In `~/.gemini/settings.json`, `~/.cursor/mcp.json` or `claude_desktop_config.json`:
 
@@ -69,7 +91,7 @@ In `~/.gemini/settings.json`, `~/.cursor/mcp.json` or `claude_desktop_config.jso
 
 On Windows, if the client can't start `npx`, use `"command": "cmd", "args": ["/c", "npx", "-y", "github:devops-riku/task-queue-mcp"]`.
 
-Your API key works like your password for your tasks: keep it in the client's settings only, and revoke it in Task Queue (Profile → API keys) if it leaks.
+Your API key works like your password for your tasks: keep it in the client's settings only, and revoke it in Task Queue (Profile → Connect → API keys) if it leaks.
 
 ## Develop
 
