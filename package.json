@@ -1,6 +1,6 @@
 {
   "name": "task-queue-mcp",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "MCP server for Task Queue: list, create, report on, move and assign your tasks from any MCP client, with your personal API key.",
   "type": "module",
   "bin": {

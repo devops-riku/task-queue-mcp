@@ -188,7 +188,7 @@ export function registerTools(server, client) {
     {
       title: 'Move a task',
       description:
-        'Moves a task to a board column by name, as dragging it on the board does: In Queue, In Progress (starts or resumes it), Blocked (needs reason), Done (completes it; reason is the completion note), or one of its project board’s own columns. An unknown column lists the board’s columns. With folder, files it in another project (needs Manage projects). Reopening is done in Task Queue.',
+        'Moves a task to a board column by name, as dragging it on the board does: In Queue, In Progress (starts or resumes it), Blocked (needs reason), Done (completes it; reason is the completion note), or one of its project board’s own columns. It also moves back a step: from In Progress, Blocked or a later column to In Queue (back in the assignee’s queue, not started; the time worked so far stays), or to the pool (needs reason, and Return any task for work in progress). An unknown column lists the board’s columns. With folder, files it in another project (needs Manage projects). Reopening is done in Task Queue.',
       inputSchema: {
         task,
         column: z.string().min(1).max(80).optional(),
