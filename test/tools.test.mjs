@@ -120,6 +120,19 @@ test('attaching files sends them base64-encoded', async () => {
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
+test('a reassigned task says to read its comments first', async () => {
+  const reassigned = { at: '2026-11-13T09:00:00Z', reason: 'Alice is out', from_user: 'Alice Dev', by: 'Ada Admin', comment_count: 2, note: 'Reassigned to Bob Dev from Alice Dev by Ada Admin. Read its 2 comments before starting.' };
+  const { callTool } = await connect({
+    [`GET /my/tasks/${ID}`]: [200, { ...doc({ status: 'QUEUED' }), comments: [], reassigned }],
+    'GET /my/tasks?status=active': [200, { tasks: [{ id: ID, task_number: 'TASK-7', title: 'Fix login', reassigned }, { id: 'x', task_number: 'TASK-8', title: 'Other', reassigned: null }] }],
+  });
+  const one = await callTool('get_task', { task: ID });
+  assert.match(one.content[0].text, /^TASK-7 "Fix login" is queued\. Reassigned to Bob Dev from Alice Dev/);
+  const list = await callTool('list_my_tasks', {});
+  assert.match(list.content[0].text, /^2 active tasks\.\nTASK-7 "Fix login" was reassigned to you from Alice Dev: read its 2 comments with get_task/);
+  assert.doesNotMatch(list.content[0].text.split('\n\n')[0], /TASK-8/);
+});
+
 test('not set up: every call says what to set', async () => {
   const { callTool } = await connect({}, { url: null, key: null });
   const r = await callTool('list_my_tasks', {});

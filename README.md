@@ -6,8 +6,8 @@ An [MCP](https://modelcontextprotocol.io) server for **Task Queue**. Any MCP cli
 
 | Tool | What it does |
 |------|--------------|
-| `list_my_tasks` | Your tasks across your workspaces (active, done or all), with each workspace's category and priority values |
-| `get_task` | A task with its notes, files, parent and subtasks, and the rules for changing it. Finds any task you may see by its number |
+| `list_my_tasks` | Your tasks across your workspaces (active, done or all), with each workspace's category and priority values. Names the ones reassigned to you, whose comments to read first |
+| `get_task` | A task with its notes, files, parent and subtasks, and the rules for changing it. When it was reassigned to you, the reply says who had it and why, and to read its comments before working on it. Finds any task you may see by its number |
 | `create_task` | A new task in your own queue, optionally filed in a project (`Website / Checkout`) or under a parent task, and started at once |
 | `start_task` | Starts a queued task (with your estimate when it has none) |
 | `complete_task` | Completes a task in progress, with a completion note |
