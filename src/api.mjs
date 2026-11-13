@@ -58,7 +58,7 @@ export function createClient(settings, { fetchImpl = fetch, timeout = TIMEOUT_MS
       throw new ApiError(
         0,
         'NOT_SET_UP',
-        'Task Queue isn’t set up: set TASK_QUEUE_URL and TASK_QUEUE_API_KEY for this MCP server (a personal API key, from Task Queue under Profile → API keys).',
+        'Task Queue isn’t set up: run  npx -y github:devops-riku/task-queue-mcp login --url <your Task Queue address>  in a terminal, or set TASK_QUEUE_URL and TASK_QUEUE_API_KEY for this MCP server (a personal API key, from Task Queue under Profile → Connect → API keys).',
       );
     }
     let res;
