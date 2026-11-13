@@ -27,6 +27,17 @@ function guard(fn) {
 }
 
 const label = (doc) => `${doc.task.task_number} "${doc.task.title}"`;
+/** A task that reached its holder from someone else's queue: what was said before the hand-off is in its comments. */
+const handoff = (doc) => (doc.reassigned ? ` ${doc.reassigned.note}` : '');
+const handedOver = (tasks) =>
+  tasks
+    .filter((t) => t.reassigned)
+    .map((t) => {
+      const from = t.reassigned.from_user ? ` from ${t.reassigned.from_user}` : '';
+      const n = t.reassigned.comment_count;
+      return `\n${t.task_number} "${t.title}" was reassigned to you${from}: ${n ? `read its ${n === 1 ? 'comment' : `${n} comments`} with get_task before working on it` : 'it has no comments yet'}.`;
+    })
+    .join('');
 const now = () => new Date().toISOString();
 const READ = { readOnlyHint: true, openWorldHint: true };
 const WRITE = { readOnlyHint: false, destructiveHint: false, openWorldHint: true };
@@ -48,7 +59,7 @@ export function registerTools(server, client) {
     {
       title: 'List my tasks',
       description:
-        'The tasks assigned to you, across your workspaces, with each workspace and its category and priority values (needed to create a task). active: queued, in progress or on hold; done: completed or cancelled.',
+        'The tasks assigned to you, across your workspaces, with each workspace and its category and priority values (needed to create a task). active: queued, in progress or on hold; done: completed or cancelled. A task with reassigned set reached you from someone else’s queue: read it with get_task, comments included, before you work on it.',
       inputSchema: {
         status: z.enum(['active', 'done', 'all']).default('active'),
         workspace_id: z.string().uuid().optional().describe('Only this workspace.'),
@@ -58,7 +69,7 @@ export function registerTools(server, client) {
     guard(async ({ status, workspace_id }) => {
       const query = new URLSearchParams({ status, ...(workspace_id ? { workspace_id } : {}) });
       const data = await call('GET', `/my/tasks?${query}`);
-      return reply(`${data.tasks.length} ${status} task${data.tasks.length === 1 ? '' : 's'}.`, data);
+      return reply(`${data.tasks.length} ${status} task${data.tasks.length === 1 ? '' : 's'}.${handedOver(data.tasks)}`, data);
     }),
   );
 
@@ -67,13 +78,13 @@ export function registerTools(server, client) {
     {
       title: 'Read a task',
       description:
-        'A task with its description, notes, files, parent and subtasks, and how_to_update: the rules for changing it in its current state. Finds any task you may see by its number (pool tasks too, with View all tasks).',
+        'A task with its description, notes (comments), files, parent and subtasks, and how_to_update: the rules for changing it in its current state. reassigned is set when it reached its assignee from someone else’s queue: then read its comments before working on it, since they say what was done and found before the hand-off. Finds any task you may see by its number (pool tasks too, with View all tasks).',
       inputSchema: { task },
       annotations: READ,
     },
     guard(async (args) => {
       const doc = await call('GET', `/my/tasks/${await taskId(args.task)}`);
-      return reply(`${label(doc)} is ${doc.task.status.toLowerCase().replace('_', ' ')}.`, doc);
+      return reply(`${label(doc)} is ${doc.task.status.toLowerCase().replace('_', ' ')}.${handoff(doc)}`, doc);
     }),
   );
 
@@ -114,13 +125,13 @@ export function registerTools(server, client) {
     'start_task',
     {
       title: 'Start a task',
-      description: 'Starts a queued task (or corrects the start time of one already started). A task without an estimate needs estimate_minutes.',
+      description: 'Starts a queued task (or corrects the start time of one already started). A task without an estimate needs estimate_minutes. A reassigned task: read its comments (get_task) first.',
       inputSchema: { task, estimate_minutes: z.number().int().min(1).optional(), started_at: time('When work started').optional() },
       annotations: WRITE,
     },
     guard(async (args) => {
       const doc = await report(args.task, { started_at: args.started_at ?? now(), ...(args.estimate_minutes ? { estimate_minutes: args.estimate_minutes } : {}) });
-      return reply(`Started ${label(doc)}.`, doc);
+      return reply(`Started ${label(doc)}.${handoff(doc)}`, doc);
     }),
   );
 
