@@ -16,9 +16,10 @@ const configPath = (env) => path.join(env.TASK_QUEUE_HOME || path.join(os.homedi
 
 function openBrowser(link) {
   const [cmd, args] =
-    process.platform === 'win32' ? ['cmd', ['/c', 'start', '""', link]] : process.platform === 'darwin' ? ['open', [link]] : ['xdg-open', [link]];
+    process.platform === 'win32' ? ['cmd', ['/c', 'start', '""', `"${link}"`]] : process.platform === 'darwin' ? ['open', [link]] : ['xdg-open', [link]];
   try {
-    const child = spawn(cmd, args, { stdio: 'ignore', detached: true, windowsHide: true });
+    // Verbatim on Windows: Node would otherwise escape start's empty "" title into something else.
+    const child = spawn(cmd, args, { stdio: 'ignore', detached: true, windowsHide: true, windowsVerbatimArguments: process.platform === 'win32' });
     child.on('error', () => {});
     child.unref();
   } catch {
