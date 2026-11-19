@@ -165,3 +165,19 @@ test('the stdio server starts and lists its tools', async () => {
   assert.equal(client.getServerVersion().name, 'task-queue');
   await client.close();
 });
+
+test('a task names its board as it is now, so moves use the current column names', async () => {
+  const board = { name: 'Design', column: 'Ready for QA', columns: ['Pool', 'Queued', 'Ready for QA', 'In progress', 'Blocked', 'Done'] };
+  const { callTool, seen } = await connect({
+    [`GET /my/tasks/${ID}`]: [200, { ...doc({ status: 'QUEUED' }), comments: [], board }],
+    [`PATCH /my/tasks/${ID}`]: [200, { ...doc({ status: 'QUEUED' }), board }],
+  });
+  const one = await callTool('get_task', { task: ID });
+  assert.match(one.content[0].text, /^TASK-7 "Fix login" is queued\. On the Design board, in Ready for QA; its columns: Pool, Queued, Ready for QA, In progress, Blocked, Done\./);
+  const moved = await callTool('move_task', { task: ID, column: 'Ready for QA' });
+  assert.match(moved.content[0].text, /^Moved TASK-7 "Fix login"\. It's queued now, in the Ready for QA column\./);
+  assert.deepEqual(seen.at(-1).body, { column: 'Ready for QA' });
+  // An older Task Queue sends no board: the line is simply left out.
+  const { callTool: older } = await connect({ [`GET /my/tasks/${ID}`]: [200, { ...doc({ status: 'QUEUED' }), comments: [] }] });
+  assert.equal((await older('get_task', { task: ID })).content[0].text.split('\n')[0], 'TASK-7 "Fix login" is queued.');
+});

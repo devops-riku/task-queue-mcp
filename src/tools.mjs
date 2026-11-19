@@ -29,6 +29,13 @@ function guard(fn) {
 const label = (doc) => `${doc.task.task_number} "${doc.task.title}"`;
 /** A task that reached its holder from someone else's queue: what was said before the hand-off is in its comments. */
 const handoff = (doc) => (doc.reassigned ? ` ${doc.reassigned.note}` : '');
+/** The board the task's project uses, as it is now: a project's board can be customized (columns renamed, added,
+ * a subproject given its own), so moves use these names rather than remembered ones. Older servers send none. */
+const boardLine = (doc) => {
+  const b = doc.board;
+  if (!b?.columns?.length) return '';
+  return ` On the ${b.name} board${b.column ? `, in ${b.column}` : ''}; its columns: ${b.columns.join(', ')}.`;
+};
 const handedOver = (tasks) =>
   tasks
     .filter((t) => t.reassigned)
@@ -78,13 +85,13 @@ export function registerTools(server, client) {
     {
       title: 'Read a task',
       description:
-        'A task with its description, notes (comments), files, parent and subtasks, and how_to_update: the rules for changing it in its current state. reassigned is set when it reached its assignee from someone else’s queue: then read its comments before working on it, since they say what was done and found before the hand-off. Finds any task you may see by its number (pool tasks too, with View all tasks).',
+        'A task with its description, notes (comments), files, parent and subtasks, board (the board its project uses now: its name, the column the task is in, and every column move_task can name), and how_to_update: the rules for changing it in its current state. reassigned is set when it reached its assignee from someone else’s queue: then read its comments before working on it, since they say what was done and found before the hand-off. Finds any task you may see by its number (pool tasks too, with View all tasks).',
       inputSchema: { task },
       annotations: READ,
     },
     guard(async (args) => {
       const doc = await call('GET', `/my/tasks/${await taskId(args.task)}`);
-      return reply(`${label(doc)} is ${doc.task.status.toLowerCase().replace('_', ' ')}.${handoff(doc)}`, doc);
+      return reply(`${label(doc)} is ${doc.task.status.toLowerCase().replace('_', ' ')}.${boardLine(doc)}${handoff(doc)}`, doc);
     }),
   );
 
@@ -199,7 +206,7 @@ export function registerTools(server, client) {
     {
       title: 'Move a task',
       description:
-        'Moves a task to a board column by name, as dragging it on the board does: In Queue, In Progress (starts or resumes it), Blocked (needs reason), Done (completes it; reason is the completion note), or one of its project board’s own columns. It also moves back a step: from In Progress, Blocked or a later column to In Queue (back in the assignee’s queue, not started; the time worked so far stays), or to the pool (needs reason, and Return any task for work in progress). An unknown column lists the board’s columns. With folder, files it in another project (needs Manage projects). Reopening is done in Task Queue.',
+        'Moves a task to a board column by name, as dragging it on the board does: In Queue, In Progress (starts or resumes it), Blocked (needs reason), Done (completes it; reason is the completion note), or one of the own columns of the board its project uses (a subproject can have its own board, and columns can be renamed or added at any time: take the names from get_task’s board.columns rather than from memory). It also moves back a step: from In Progress, Blocked or a later column to In Queue (back in the assignee’s queue, not started; the time worked so far stays), or to the pool (needs reason, and Return any task for work in progress). An unknown column lists the board’s columns. With folder, files it in another project (needs Manage projects). Reopening is done in Task Queue.',
       inputSchema: {
         task,
         column: z.string().min(1).max(80).optional(),
@@ -211,7 +218,10 @@ export function registerTools(server, client) {
     guard(async ({ task: ref, ...body }) => {
       if (!body.column && !body.folder) throw Object.assign(new Error('Give a column, a folder, or both.'), { code: 'NOTHING_TO_MOVE' });
       const doc = await change(ref, body);
-      return reply(`Moved ${label(doc)}. It's ${doc.task.status.toLowerCase().replace('_', ' ')} now.`, doc);
+      const status = doc.task.status.toLowerCase().replace('_', ' ');
+      // The column only when it says more than the status (an own column like "For QA", or a renamed one).
+      const column = doc.board?.column && doc.board.column.toLowerCase() !== status ? `, in the ${doc.board.column} column` : '';
+      return reply(`Moved ${label(doc)}. It's ${status} now${column}.`, doc);
     }),
   );
 
