@@ -7,14 +7,14 @@ An [MCP](https://modelcontextprotocol.io) server for **Task Queue**. Any MCP cli
 | Tool | What it does |
 |------|--------------|
 | `list_my_tasks` | Your tasks across your workspaces (active, done or all), with each workspace's category and priority values. Names the ones reassigned to you, whose comments to read first |
-| `get_task` | A task with its notes, files, parent and subtasks, and the rules for changing it. When it was reassigned to you, the reply says who had it and why, and to read its comments before working on it. Finds any task you may see by its number |
+| `get_task` | A task with its notes, files, parent and subtasks, the board its project uses as it is now (the column it's in and every column it can move to), and the rules for changing it. When it was reassigned to you, the reply says who had it and why, and to read its comments before working on it. Finds any task you may see by its number |
 | `create_task` | A new task in your own queue, optionally filed in a project (`Website / Checkout`) or under a parent task, and started at once |
 | `start_task` | Starts a queued task (with your estimate when it has none) |
 | `complete_task` | Completes a task in progress, with a completion note |
 | `add_comment` | Adds a note to a task |
 | `attach_files` | Attaches files from your computer to a task |
 | `pause_task` / `resume_task` | Stops and restarts a task's worked time while nobody is on it |
-| `move_task` | Moves a task to a board column by name, as dragging it on the board does (In Progress, Blocked, Done, or a project's own columns such as "For QA"), and/or files it in another project |
+| `move_task` | Moves a task to a board column by name, as dragging it on the board does (In Progress, Blocked, Done, or a project's own columns such as "For QA"), and/or files it in another project. Boards can be customized per project and subproject at any time, so it takes the names `get_task` shows |
 | `assign_task` | Assigns a task to a member by email, to you (`me`), or back to the Task Pool (`none`) |
 | `update_task` | Changes a task's title, description, category, priority, dates, or gives your estimate |
 | `delete_task` | Deletes a task. It can't be undone |
