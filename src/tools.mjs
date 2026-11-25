@@ -281,4 +281,20 @@ export function registerTools(server, client) {
       return reply(`Deleted ${args.task}.`);
     }),
   );
+
+  server.registerTool(
+    'delete_comment',
+    {
+      title: 'Delete a comment',
+      description:
+        'Deletes one comment on a task, with its files. It can’t be undone. Your own comments, or anyone’s with Edit tasks; not while the task is completed. Take the comment’s id from get_task’s comments. Only when the person asks for it.',
+      inputSchema: { task, comment: z.guid().describe('The comment’s id, from get_task’s comments.') },
+      annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
+    },
+    guard(async (args) => {
+      const id = await taskId(args.task);
+      await call('DELETE', `/my/tasks/${id}/comments/${args.comment}`);
+      return reply(`Deleted the comment on ${args.task}.`);
+    }),
+  );
 }
