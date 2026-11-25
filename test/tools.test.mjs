@@ -41,12 +41,13 @@ test('every tool is listed, with hints for what reads and what deletes', async (
   const { tools } = await client.listTools();
   const names = tools.map((t) => t.name).sort();
   assert.deepEqual(names, [
-    'add_comment', 'assign_task', 'attach_files', 'complete_task', 'create_task', 'delete_task', 'get_task', 'list_my_tasks',
+    'add_comment', 'assign_task', 'attach_files', 'complete_task', 'create_task', 'delete_comment', 'delete_task', 'get_task', 'list_my_tasks',
     'move_task', 'pause_task', 'resume_task', 'start_task', 'update_task',
   ]);
   const by = Object.fromEntries(tools.map((t) => [t.name, t]));
   assert.equal(by.list_my_tasks.annotations.readOnlyHint, true);
   assert.equal(by.delete_task.annotations.destructiveHint, true);
+  assert.equal(by.delete_comment.annotations.destructiveHint, true);
   assert.equal(by.move_task.annotations.destructiveHint, false);
 });
 
@@ -63,6 +64,23 @@ test('tasks are named by number, looked up once, then changed by id', async () =
     [`PATCH /my/tasks/${ID}`, { column: 'For QA' }],
   ]);
   assert.equal(seen[0].auth, 'Bearer tqk_test');
+});
+
+test('deleting a comment names its task and the comment', async () => {
+  const COMMENT = '99999999-8888-7777-6666-555555555555';
+  const { callTool, seen } = await connect({
+    [`GET /my/tasks/by-number/TASK-7`]: [200, doc()],
+    [`DELETE /my/tasks/${ID}/comments/${COMMENT}`]: [204, null],
+  });
+  const r = await callTool('delete_comment', { task: 'TASK-7', comment: COMMENT });
+  assert.equal(r.isError, undefined);
+  assert.match(r.content[0].text, /^Deleted the comment on TASK-7\./);
+  assert.deepEqual(seen.map((s) => s.route), ['GET /my/tasks/by-number/TASK-7', `DELETE /my/tasks/${ID}/comments/${COMMENT}`]);
+
+  const refused = await connect({ [`DELETE /my/tasks/${ID}/comments/${COMMENT}`]: [403, { code: 'FORBIDDEN', message: 'Only the person who wrote this comment, or someone who can edit tasks, can delete it.' }] });
+  const no = await refused.callTool('delete_comment', { task: ID, comment: COMMENT });
+  assert.equal(no.isError, true);
+  assert.match(no.content[0].text, /^FORBIDDEN: Only the person who wrote this comment/);
 });
 
 test('assigning: an email, me, or none for the pool', async () => {
@@ -161,7 +179,7 @@ test('the stdio server starts and lists its tools', async () => {
   const client = new Client({ name: 'smoke', version: '1.0.0' });
   await client.connect(transport);
   const { tools } = await client.listTools();
-  assert.equal(tools.length, 13);
+  assert.equal(tools.length, 14);
   assert.equal(client.getServerVersion().name, 'task-queue');
   await client.close();
 });

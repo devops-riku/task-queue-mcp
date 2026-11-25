@@ -18,6 +18,7 @@ An [MCP](https://modelcontextprotocol.io) server for **Task Queue**. Any MCP cli
 | `assign_task` | Assigns a task to a member by email, to you (`me`), or back to the Task Pool (`none`) |
 | `update_task` | Changes a task's title, description, category, priority, dates, or gives your estimate |
 | `delete_task` | Deletes a task. It can't be undone |
+| `delete_comment` | Deletes one comment on a task, with its files: your own, or anyone's with *Edit tasks*. It can't be undone |
 
 Tasks are named by their number, e.g. `TASK-000123`, or their id. Each tool needs what the same action needs in the app: assigning needs *Assign tasks*, deleting needs *Delete tasks*, and so on. When Task Queue refuses something, the tool answers with its reason (an unknown board column lists the board's columns).
 
